@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import socket
 import subprocess
@@ -88,7 +89,16 @@ class RayHook(KubernetesHook):  # type: ignore
         self.create_cluster_if_needed = False
         self.cookies = self._get_field("cookies")
         self.metadata = self._get_field("metadata")
-        self.headers = self._get_field("headers")
+
+        # The headers are retrieved from the connection as a string. But they are expected to be a dictionary. Here we convert the string to dictionary before assigning it to self.headers
+        headers=self._get_field("headers")
+        if headers:
+            try:
+                headers=json.loads(headers)
+            except Exception as e:
+                self.log.error("Unable to convert headers to dict")
+                self.log.error(e)
+        self.headers = headers
         self.verify = self._get_field("verify") or False
         self.ray_client_instance = None
 
